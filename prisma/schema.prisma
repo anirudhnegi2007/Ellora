@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Better Auth Models ───────────────────────────────────────────────────────
+
+model User {
+  id            String         @id @map("_id") @db.ObjectId
+  name          String
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  orders        Order[]
+  reviews       Review[]
+  wishlist      WishlistItem[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @map("_id") @db.ObjectId
+  userId                String    @db.ObjectId
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @map("_id") @db.ObjectId
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
+}
+
+// ─── Ecommerce Models ─────────────────────────────────────────────────────────
+
+model Category {
+  id        String    @id @map("_id") @db.ObjectId
+  name      String    @unique
+  slug      String    @unique
+  image     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String           @id @map("_id") @db.ObjectId
+  name        String
+  slug        String           @unique
+  description String
+  price       Float
+  image       String
+  details     String[]
+  inventory   Int              @default(100)
+  categoryId  String           @db.ObjectId
+  category    Category         @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  reviews     Review[]
+  orderItems  OrderItem[]
+  wishlist    WishlistItem[]
+  variants    ProductVariant[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String  @id @map("_id") @db.ObjectId
+  productId String  @db.ObjectId
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  sku       String  @unique
+  price     Float?
+  inventory Int     @default(0)
+
+  @@map("product_variants")
+}
+
+model Review {
+  id        String   @id @map("_id") @db.ObjectId
+  rating    Int
+  comment   String?
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id              String      @id @map("_id") @db.ObjectId
+  userId          String?     @db.ObjectId
+  user            User?       @relation(fields: [userId], references: [id])
+  status          OrderStatus @default(PENDING)
+  subtotal        Float
+  tax             Float
+  shipping        Float       @default(0)
+  total           Float
+  email           String
+  shippingName    String
+  shippingAddress String
+  shippingCity    String
+  shippingZip     String
+  couponCode      String?
+  discount        Float       @default(0)
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @map("_id") @db.ObjectId
+  orderId   String  @db.ObjectId
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String  @db.ObjectId
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+
+  @@map("order_items")
+}
+
+model WishlistItem {
+  id        String   @id @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model Coupon {
+  id            String       @id @map("_id") @db.ObjectId
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Float
+  minOrderValue Float        @default(0)
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  @@map("coupons")
+}

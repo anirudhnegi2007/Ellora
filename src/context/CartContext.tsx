@@ -1,16 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product } from "@/data/products";
-
-export interface CartItem {
-  product: Product;
-  quantity: number;
-}
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import type { CartItem } from "@/types/cart";
+import type { Product, ProductListItem } from "@/types/product";
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
+  isHydrated: boolean;
+  addToCart: (product: Product | ProductListItem, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -20,65 +17,93 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = "ellora-cart";
+
+function toCartProduct(product: Product | ProductListItem): Product {
+  if ("description" in product && product.description) {
+    return product as Product;
+  }
+
+  const listItem = product as ProductListItem;
+  return {
+    id: listItem.id,
+    name: listItem.name,
+    slug: listItem.slug,
+    description: "",
+    price: listItem.price,
+    image: listItem.image,
+    details: [],
+    inventory: listItem.inventory,
+    category: listItem.category,
+    rating: listItem.rating,
+  };
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Failed to parse cart from localStorage", e);
-      }
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      if (saved) setCart(JSON.parse(saved));
+    } catch {
+      // ignore parse errors
     }
+    setIsHydrated(true);
   }, []);
 
-  // Save cart to localStorage on change
-  const saveCart = (newCart: CartItem[]) => {
-    setCart(newCart);
-    localStorage.setItem("cart", JSON.stringify(newCart));
-  };
-
-  const addToCart = (product: Product, quantity = 1) => {
-    const existingIndex = cart.findIndex((item) => item.product.id === product.id);
-    if (existingIndex > -1) {
-      const newCart = [...cart];
-      newCart[existingIndex].quantity += quantity;
-      saveCart(newCart);
-    } else {
-      saveCart([...cart, { product, quantity }]);
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     }
-  };
+  }, [cart, isHydrated]);
 
-  const removeFromCart = (productId: string) => {
-    const newCart = cart.filter((item) => item.product.id !== productId);
-    saveCart(newCart);
-  };
+  const addToCart = useCallback((product: Product | ProductListItem, quantity = 1) => {
+    const cartProduct = toCartProduct(product);
+    setCart((prev) => {
+      const existingIndex = prev.findIndex((item) => item.product.id === cartProduct.id);
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + quantity,
+        };
+        return updated;
+      }
+      return [...prev, { product: cartProduct, quantity }];
+    });
+  }, []);
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const removeFromCart = useCallback((productId: string) => {
+    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+  }, []);
+
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      setCart((prev) => prev.filter((item) => item.product.id !== productId));
       return;
     }
-    const newCart = cart.map((item) =>
-      item.product.id === productId ? { ...item, quantity } : item
+    setCart((prev) =>
+      prev.map((item) =>
+        item.product.id === productId ? { ...item, quantity } : item
+      )
     );
-    saveCart(newCart);
-  };
+  }, []);
 
-  const clearCart = () => {
-    saveCart([]);
-  };
+  const clearCart = useCallback(() => setCart([]), []);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const totalPrice = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  const totalPrice = cart.reduce(
+    (acc, item) => acc + item.product.price * item.quantity,
+    0
+  );
 
   return (
     <CartContext.Provider
       value={{
         cart,
+        isHydrated,
         addToCart,
         removeFromCart,
         updateQuantity,
@@ -94,7 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;
