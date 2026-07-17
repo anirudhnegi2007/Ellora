@@ -14,7 +14,7 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center gap-8">
           <Link href="/" className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            E<span className="text-indigo-600 dark:text-indigo-400">Shop</span>
+            E<span className="text-indigo-600 dark:text-indigo-400">llora</span>
           </Link>
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
