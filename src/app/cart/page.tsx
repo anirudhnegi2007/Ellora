@@ -1,4 +1,5 @@
 "use client";
+// Cart page — client component because it reads from CartContext
 
 import React from "react";
 import Link from "next/link";
@@ -69,9 +70,9 @@ export default function CartPage() {
               <div className="flex flex-grow flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400">
-                    <Link href={`/products/${item.product.id}`}>{item.product.name}</Link>
+                    <Link href={`/products/${item.product.slug}`}>{item.product.name}</Link>
                   </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-500">{item.product.category}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-500">{item.product.category?.name ?? ""}</p>
                   <p className="text-sm font-bold text-zinc-900 dark:text-white">${item.product.price.toFixed(2)}</p>
                 </div>
 
