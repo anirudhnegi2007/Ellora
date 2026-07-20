@@ -1,4 +1,5 @@
 export type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED";
 
 export interface OrderItem {
   id: string;
@@ -12,6 +13,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   status: OrderStatus;
+  paymentStatus: PaymentStatus;
   subtotal: number;
   tax: number;
   shipping: number;
@@ -23,6 +25,8 @@ export interface Order {
   shippingCity: string;
   shippingZip: string;
   couponCode?: string | null;
+  razorpayOrderId?: string | null;
+  razorpayPaymentId?: string | null;
   items: OrderItem[];
   createdAt: string;
 }

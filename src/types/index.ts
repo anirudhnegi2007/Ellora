@@ -1,7 +1,8 @@
 export type { Product, ProductListItem, ProductSearchParams, PaginatedResponse } from "./product";
 export type { CartItem, CartState } from "./cart";
-export type { Order, OrderItem, OrderStatus } from "./order";
+export type { Order, OrderItem, OrderStatus, PaymentStatus } from "./order";
 export type { Review, ReviewSummary } from "./review";
+export type { RazorpayOptions, RazorpayPaymentSuccessResponse, RazorpayInstance } from "./razorpay";
 
 export interface ApiErrorResponse {
   code: string;

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { checkoutSchema, type CheckoutInput } from "@/validations/order.schema";
 import { useCart } from "@/context/CartContext";
 import { generateOrderId } from "@/lib/utils";
+import { useRazorpayPayment } from "@/hooks/useRazorpayPayment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OrderSummary } from "@/components/shared/OrderSummary";
+import { ShieldCheck } from "lucide-react";
 
 interface CheckoutFormProps {
   onSuccess: (orderId: string, email: string) => void;
@@ -24,8 +26,7 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const { cart, totalPrice, clearCart } = useCart();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { processPayment, isProcessing, error: paymentError } = useRazorpayPayment();
   const [discount, setDiscount] = useState(0);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -73,37 +74,22 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   }
 
   async function onSubmit(data: CheckoutInput) {
-    setIsSubmitting(true);
-    setError(null);
+    const checkoutPayload: CheckoutInput = {
+      ...data,
+      items: cart.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+    };
 
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          items: cart.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            price: item.product.price,
-          })),
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        setError(errData.message ?? "Failed to place order");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const order = await res.json();
-      clearCart();
-      onSuccess(order.id ?? generateOrderId(), data.email);
-    } catch {
-      setError("Something went wrong. Please try again.");
-      setIsSubmitting(false);
-    }
+    await processPayment({
+      checkoutData: checkoutPayload,
+      onSuccess: (confirmedOrder) => {
+        clearCart();
+        onSuccess(confirmedOrder.id || generateOrderId(), data.email);
+      },
+    });
   }
 
   return (
@@ -113,15 +99,18 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
         className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-12 items-start"
       >
         <div className="lg:col-span-7 space-y-6">
-          {error && (
-            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/50 p-3 rounded-lg">
-              {error}
-            </p>
+          {paymentError && (
+            <div className="text-sm text-red-600 bg-red-50 dark:bg-red-950/50 dark:text-red-400 p-4 rounded-lg border border-red-200 dark:border-red-900/50 flex flex-col gap-1">
+              <span className="font-semibold">Payment Status</span>
+              <span>{paymentError}</span>
+            </div>
           )}
 
           <Card>
             <CardHeader>
-              <CardTitle>Contact & Shipping Info</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Contact & Shipping Info
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
@@ -131,7 +120,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} />
+                      <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,7 +133,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="John Doe" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -155,9 +144,9 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                 name="address"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel>Street Address</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="123 Main St, Apt 4B" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -170,7 +159,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="Mumbai" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,7 +172,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                   <FormItem>
                     <FormLabel>Postal Code</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="400001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,7 +183,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Coupon Code</CardTitle>
+              <CardTitle className="text-base">Coupon Code</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex gap-2">
@@ -209,19 +198,27 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
               </div>
               {couponError && <p className="text-xs text-red-500 mt-2">{couponError}</p>}
               {discount > 0 && (
-                <p className="text-xs text-emerald-600 mt-2">Coupon applied successfully!</p>
+                <p className="text-xs text-emerald-600 mt-2 font-medium">Coupon applied successfully!</p>
               )}
             </CardContent>
           </Card>
+
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-indigo-100 bg-indigo-50/50 dark:border-indigo-950 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
+            <div className="text-xs">
+              <span className="font-semibold block">Secured by Razorpay</span>
+              <span>Supports UPI, Cards, NetBanking, and Wallets. 256-bit SSL Encrypted.</span>
+            </div>
+          </div>
         </div>
 
         <div className="lg:col-span-5">
           <OrderSummary
             subtotal={totalPrice}
             discount={discount}
-            actionLabel="Place Order"
+            actionLabel="Pay with Razorpay"
             onAction={form.handleSubmit(onSubmit)}
-            isSubmitting={isSubmitting}
+            isSubmitting={isProcessing}
             showItems
             items={cart.map((item) => ({
               name: item.product.name,

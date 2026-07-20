@@ -4,11 +4,12 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import SearchBar from "@/components/SearchBar";
+import { SearchBar } from "@/features/products/components/SearchBar";
 
 export default function Header() {
   const { totalItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const router = useRouter();
   const [categories, setCategories] = useState<{ name: string; slug: string }[]>([]);
 
@@ -177,9 +178,9 @@ export default function Header() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (searchQuery.trim()) {
-                  router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
-                  setSearchQuery("");
+                if (mobileSearchQuery.trim()) {
+                  router.push(`/products?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
+                  setMobileSearchQuery("");
                   setIsMobileMenuOpen(false);
                 }
               }}
@@ -188,8 +189,8 @@ export default function Header() {
               <input
                 type="text"
                 placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={mobileSearchQuery}
+                onChange={(e) => setMobileSearchQuery(e.target.value)}
                 className="w-full rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 pr-10 text-sm text-zinc-900 outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               />
               <button

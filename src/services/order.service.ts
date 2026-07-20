@@ -4,6 +4,8 @@ import { ApiError, notFound, validationError } from "@/lib/errors";
 import type { CheckoutInput } from "@/validations/order.schema";
 import type { Order } from "@/types";
 
+const IS_VALID_OBJECT_ID = /^[0-9a-fA-F]{24}$/;
+
 function generateObjectId(): string {
   const chars = "abcdef0123456789";
   let result = "";
@@ -16,6 +18,7 @@ function generateObjectId(): string {
 function mapOrder(order: {
   id: string;
   status: string;
+  paymentStatus: string;
   subtotal: number;
   tax: number;
   shipping: number;
@@ -27,18 +30,21 @@ function mapOrder(order: {
   shippingCity: string;
   shippingZip: string;
   couponCode: string | null;
+  razorpayOrderId?: string | null;
+  razorpayPaymentId?: string | null;
   createdAt: Date;
   items: {
     id: string;
-    productId: string;
+    productId?: string | null;
     quantity: number;
     price: number;
-    product: { name: string; image: string };
+    product?: { name: string; image: string } | null;
   }[];
 }): Order {
   return {
     id: order.id,
     status: order.status as Order["status"],
+    paymentStatus: order.paymentStatus as Order["paymentStatus"],
     subtotal: order.subtotal,
     tax: order.tax,
     shipping: order.shipping,
@@ -50,29 +56,41 @@ function mapOrder(order: {
     shippingCity: order.shippingCity,
     shippingZip: order.shippingZip,
     couponCode: order.couponCode,
+    razorpayOrderId: order.razorpayOrderId,
+    razorpayPaymentId: order.razorpayPaymentId,
     createdAt: order.createdAt.toISOString(),
     items: order.items.map((item) => ({
       id: item.id,
-      productId: item.productId,
-      productName: item.product.name,
-      productImage: item.product.image,
+      productId: item.productId ?? "",
+      productName: item.product?.name ?? "Purchased Item",
+      productImage: item.product?.image ?? "/placeholder.png",
       quantity: item.quantity,
       price: item.price,
     })),
   };
 }
 
+export interface CreateOrderPaymentDetails {
+  paymentStatus?: "PENDING" | "PAID" | "FAILED";
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+}
+
 export async function createOrder(
   input: CheckoutInput,
-  userId?: string
+  userId?: string,
+  paymentDetails?: CreateOrderPaymentDetails
 ): Promise<Order> {
-  const productIds = input.items.map((i) => i.productId);
-  const products = await db.product.findMany({
-    where: { id: { in: productIds } },
-  });
+  const validProductIds = input.items
+    .map((i) => i.productId)
+    .filter((id) => IS_VALID_OBJECT_ID.test(id));
 
-  if (products.length !== productIds.length) {
-    throw notFound("One or more products not found");
+  let products: Array<{ id: string; name: string; price: number; inventory: number }> = [];
+  if (validProductIds.length > 0) {
+    products = await db.product.findMany({
+      where: { id: { in: validProductIds } },
+    });
   }
 
   for (const item of input.items) {
@@ -101,10 +119,15 @@ export async function createOrder(
 
   const order = await db.$transaction(async (tx) => {
     for (const item of input.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { inventory: { decrement: item.quantity } },
-      });
+      if (IS_VALID_OBJECT_ID.test(item.productId)) {
+        const dbProd = products.find((p) => p.id === item.productId);
+        if (dbProd) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { inventory: { decrement: item.quantity } },
+          });
+        }
+      }
     }
 
     if (input.couponCode) {
@@ -129,10 +152,17 @@ export async function createOrder(
         total: totals.total,
         discount: totals.discount,
         couponCode: input.couponCode?.toUpperCase() ?? null,
+        status: paymentDetails?.paymentStatus === "PAID" ? "CONFIRMED" : "PENDING",
+        paymentStatus: paymentDetails?.paymentStatus ?? "PENDING",
+        razorpayOrderId: paymentDetails?.razorpayOrderId ?? null,
+        razorpayPaymentId: paymentDetails?.razorpayPaymentId ?? null,
+        razorpaySignature: paymentDetails?.razorpaySignature ?? null,
         items: {
           create: input.items.map((item) => ({
             id: generateObjectId(),
-            product: { connect: { id: item.productId } },
+            product: IS_VALID_OBJECT_ID.test(item.productId) && products.some((p) => p.id === item.productId)
+              ? { connect: { id: item.productId } }
+              : undefined,
             quantity: item.quantity,
             price: item.price,
           })),
