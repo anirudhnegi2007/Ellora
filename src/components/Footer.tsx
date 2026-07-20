@@ -1,6 +1,7 @@
 'use client';
 
 import React from "react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -9,9 +10,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Column 1: Brand */}
           <div className="space-y-4">
-            <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-              E<span className="text-indigo-600 dark:text-indigo-400">Shop</span>
-            </span>
+            <Link href="/" className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
+              E<span className="text-indigo-600 dark:text-indigo-400">llora</span>
+            </Link>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Your destination for curated high-quality electronics, clothing, and accessories.
             </p>
@@ -24,19 +25,28 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <span className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">
+                <Link
+                  href="/products?category=electronics"
+                  className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   Electronics
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">
+                <Link
+                  href="/products?category=clothing"
+                  className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   Clothing
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">
+                <Link
+                  href="/products?category=accessories"
+                  className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   Accessories
-                </span>
+                </Link>
               </li>
             </ul>
           </div>

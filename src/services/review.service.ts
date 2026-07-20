@@ -21,6 +21,15 @@ export async function getReviewsByProduct(productId: string): Promise<Review[]> 
   }));
 }
 
+function generateObjectId(): string {
+  const chars = "abcdef0123456789";
+  let result = "";
+  for (let i = 0; i < 24; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
 export async function createReview(
   input: CreateReviewInput,
   userId: string
@@ -36,6 +45,7 @@ export async function createReview(
 
   const review = await db.review.create({
     data: {
+      id: generateObjectId(),
       rating: input.rating,
       comment: input.comment,
       userId,

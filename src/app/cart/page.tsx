@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart();
 
-  const shipping = totalItems > 0 ? 0 : 0; // Free shipping
+  const shipping: number = totalItems > 0 ? 0 : 0; // Free shipping
   const tax = totalPrice * 0.08; // 8% tax
   const grandTotal = totalPrice + shipping + tax;
 

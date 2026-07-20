@@ -59,7 +59,7 @@ export default function ProductCard({ product }: { product: Product }) {
             ${product.price.toFixed(2)}
           </span>
           <button
-            onClick={() => addToCart(product, 1)}
+            onClick={() => addToCart(product as any, 1)}
             className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm"
           >
             Add

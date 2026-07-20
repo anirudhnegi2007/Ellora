@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/context/CartContext";
-import { ThemeProvider } from "@/context/ThemeProvider";
+import { Providers } from "@/context/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -34,13 +33,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 font-sans">
-        <ThemeProvider>
-          <CartProvider>
-            <Header />
-            <main className="flex-grow flex flex-col">{children}</main>
-            <Footer />
-          </CartProvider>
-        </ThemeProvider>
+        <Providers>
+          <Header />
+          <main className="flex-grow flex flex-col">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

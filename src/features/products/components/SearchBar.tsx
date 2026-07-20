@@ -1,25 +1,8 @@
-/**
- * SearchBar — Placeholder
- *
- * Responsibility: Provide a controlled search input that syncs
- * its value to the URL query string (?q=...) without causing full
- * page navigations, leveraging debounce to avoid excessive route updates.
- *
- * Current state: Static UI shell only. No logic implemented yet.
- *
- * Planned integrations (Step 2):
- * - Read initial value from `searchParams.q` passed as a prop
- * - Use the `useDebounce` hook from @/hooks/use-debounce
- * - Use Next.js `useRouter` + `useSearchParams` to push URL updates
- * - Trigger URL update after debounce delay (e.g. 400ms)
- *
- * Why "use client"?
- * Search input requires browser interactivity (onChange, useRouter),
- * so this must be a Client Component even though the parent page is a
- * Server Component.
- */
-
 "use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface SearchBarProps {
   /**
@@ -30,7 +13,32 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ initialQuery = "" }: SearchBarProps) {
-  // TODO (Step 2): wire up useDebounce + useRouter + useSearchParams
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [value, setValue] = useState(initialQuery);
+  const debouncedValue = useDebounce(value, 300);
+
+  // Sync state if URL changes externally
+  useEffect(() => {
+    setValue(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
+  // Update query params on change
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const currentQ = params.get("q") ?? "";
+
+    if (debouncedValue !== currentQ) {
+      if (debouncedValue) {
+        params.set("q", debouncedValue);
+      } else {
+        params.delete("q");
+      }
+      params.delete("page"); // Reset pagination on new search
+      router.push(`/products?${params.toString()}`);
+    }
+  }, [debouncedValue, router, searchParams]);
+
   return (
     <div className="relative w-full max-w-md">
       {/* Search icon */}
@@ -58,7 +66,8 @@ export function SearchBar({ initialQuery = "" }: SearchBarProps) {
         role="searchbox"
         aria-label="Search products"
         placeholder="Search products…"
-        defaultValue={initialQuery}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
         className="
           w-full rounded-lg border border-zinc-200 bg-white
           py-2.5 pl-10 pr-4 text-sm text-zinc-900

@@ -4,6 +4,15 @@ import { ApiError, notFound, validationError } from "@/lib/errors";
 import type { CheckoutInput } from "@/validations/order.schema";
 import type { Order } from "@/types";
 
+function generateObjectId(): string {
+  const chars = "abcdef0123456789";
+  let result = "";
+  for (let i = 0; i < 24; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
 function mapOrder(order: {
   id: string;
   status: string;
@@ -107,7 +116,8 @@ export async function createOrder(
 
     return tx.order.create({
       data: {
-        userId,
+        id: generateObjectId(),
+        user: userId ? { connect: { id: userId } } : undefined,
         email: input.email,
         shippingName: input.name,
         shippingAddress: input.address,
@@ -118,10 +128,11 @@ export async function createOrder(
         shipping: totals.shipping,
         total: totals.total,
         discount: totals.discount,
-        couponCode: input.couponCode?.toUpperCase(),
+        couponCode: input.couponCode?.toUpperCase() ?? null,
         items: {
           create: input.items.map((item) => ({
-            productId: item.productId,
+            id: generateObjectId(),
+            product: { connect: { id: item.productId } },
             quantity: item.quantity,
             price: item.price,
           })),

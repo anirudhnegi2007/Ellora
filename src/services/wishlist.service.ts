@@ -57,6 +57,15 @@ export async function getWishlist(userId: string): Promise<WishlistItem[]> {
   return items.map(mapWishlistItem);
 }
 
+function generateObjectId(): string {
+  const chars = "abcdef0123456789";
+  let result = "";
+  for (let i = 0; i < 24; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
 export async function addToWishlist(
   userId: string,
   productId: string
@@ -71,7 +80,11 @@ export async function addToWishlist(
   if (existing) throw conflict("Product already in wishlist");
 
   const item = await db.wishlistItem.create({
-    data: { userId, productId },
+    data: {
+      id: generateObjectId(),
+      userId,
+      productId,
+    },
     include: wishlistInclude,
   });
 
