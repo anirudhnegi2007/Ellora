@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -116,6 +117,15 @@ export function RegisterForm() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create Account"}
             </Button>
+            <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                Sign In
+              </Link>
+            </div>
           </form>
         </Form>
       </CardContent>

@@ -72,8 +72,18 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const searchInput = parsed.success ? parsed.data : productSearchSchema.parse({});
 
   // 3. Delegate all data fetching to the service layer.
-  //    This call will later be enhanced with React cache() for deduplication.
-  const { data: products, pagination } = await getProducts(searchInput);
+  let products: any[] = [];
+  let pagination = { total: 0, totalPages: 0, page: 1, limit: 12 };
+  let errorMsg = "";
+
+  try {
+    const res = await getProducts(searchInput);
+    products = res.data;
+    pagination = res.pagination;
+  } catch (err: any) {
+    console.error("Failed to fetch products:", err);
+    errorMsg = err instanceof Error ? err.message : String(err);
+  }
 
   // ---------------------------------------------------------------------------
   // Render
@@ -90,6 +100,33 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           {pagination.total} items available
         </p>
       </div>
+
+      {errorMsg && (
+        <div className="mb-8 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">Database Connection Error</h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-400">
+                <p>
+                  Ellora is unable to connect to the MongoDB database. Please ensure that:
+                </p>
+                <ul className="list-disc pl-5 mt-1 space-y-1">
+                  <li>Your <code className="font-mono bg-red-100 dark:bg-red-900/40 px-1 py-0.5 rounded text-xs">DATABASE_URL</code> in <code className="font-semibold">.env</code> is correct.</li>
+                  <li>Your current IP address is whitelisted in your MongoDB Atlas console under **Network Access**.</li>
+                </ul>
+                <p className="mt-2 text-xs font-mono opacity-80 bg-red-100/50 dark:bg-red-950/50 p-2 rounded">
+                  {errorMsg}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 
         Toolbar: SearchBar + (future) sort dropdown + filter toggles.

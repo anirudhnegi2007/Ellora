@@ -3,8 +3,16 @@ import { getFeaturedProducts } from "@/services/product.service";
 import { ProductCard } from "@/features/products/components/ProductCard";
 
 export default async function Home() {
-  // Fetch featured products from the database via the service layer
-  const products = await getFeaturedProducts(8);
+  let products: any[] = [];
+  let errorMsg = "";
+
+  try {
+    // Fetch featured products from the database via the service layer
+    products = await getFeaturedProducts(8);
+  } catch (err: any) {
+    console.error("Failed to fetch featured products:", err);
+    errorMsg = err instanceof Error ? err.message : String(err);
+  }
 
   // Derive unique categories from the fetched products
   const categories = Array.from(
@@ -13,6 +21,34 @@ export default async function Home() {
 
   return (
     <div className="w-full pb-16">
+      {errorMsg && (
+        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+          <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">Database Connection Error</h3>
+                <div className="mt-2 text-sm text-red-700 dark:text-red-400">
+                  <p>
+                    Ellora is unable to connect to the MongoDB database. Please ensure that:
+                  </p>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
+                    <li>Your <code className="font-mono bg-red-100 dark:bg-red-900/40 px-1 py-0.5 rounded text-xs">DATABASE_URL</code> in <code className="font-semibold">.env</code> is correct.</li>
+                    <li>Your current IP address is whitelisted in your MongoDB Atlas console under **Network Access**.</li>
+                  </ul>
+                  <p className="mt-2 text-xs font-mono opacity-80 bg-red-100/50 dark:bg-red-950/50 p-2 rounded">
+                    {errorMsg}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-zinc-900 text-white py-24 sm:py-32">
         <div className="absolute inset-0 opacity-40">

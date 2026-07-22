@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { SearchBar } from "@/features/products/components/SearchBar";
+import { useSession, signOut } from "@/lib/auth-client";
 
 export default function Header() {
   const { totalItems } = useCart();
+  const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const router = useRouter();
@@ -88,7 +90,9 @@ export default function Header() {
         {/* Right side: Search, Cart, Mobile Menu button */}
         <div className="flex items-center gap-4">
           {/* Search bar */}
-          <SearchBar />
+          <Suspense fallback={<div className="w-48 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full animate-pulse" />}>
+            <SearchBar />
+          </Suspense>
 
           {/* Cart Icon Link */}
           <Link
@@ -113,6 +117,22 @@ export default function Header() {
               </span>
             )}
           </Link>
+
+          {session ? (
+            <button
+              onClick={() => signOut()}
+              className="hidden md:inline-flex text-sm font-medium text-zinc-600 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition-colors cursor-pointer"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden md:inline-flex text-sm font-medium text-zinc-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors"
+            >
+              Sign In
+            </Link>
+          )}
 
           {/* Mobile menu button */}
           <button
@@ -173,6 +193,26 @@ export default function Header() {
                   </Link>
                 ))}
               </div>
+            )}
+
+            {session ? (
+              <button
+                onClick={() => {
+                  signOut();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left text-base font-medium text-red-600 dark:text-red-400 cursor-pointer"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-base font-medium text-zinc-950 dark:text-zinc-50"
+              >
+                Sign In
+              </Link>
             )}
 
             <form
