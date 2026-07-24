@@ -22,6 +22,7 @@ model User {
   orders        Order[]
   reviews       Review[]
   wishlist      WishlistItem[]
+  addresses     Address[]
 
   @@map("users")
 }
@@ -216,3 +217,19 @@ model Coupon {
 
   @@map("coupons")
 }
+
+model Address {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  address   String
+  city      String
+  zip       String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addresses")
+}
+

@@ -8,16 +8,11 @@ export default async function Home() {
 
   try {
     // Fetch featured products from the database via the service layer
-    products = await getFeaturedProducts(8);
+    products = await getFeaturedProducts(24);
   } catch (err: any) {
     console.error("Failed to fetch featured products:", err);
     errorMsg = err instanceof Error ? err.message : String(err);
   }
-
-  // Derive unique categories from the fetched products
-  const categories = Array.from(
-    new Map(products.map((p) => [p.category.slug, p.category])).values()
-  );
 
   return (
     <div className="w-full pb-16">
@@ -89,29 +84,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Category Section */}
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-2xl">
-            Browse by Category
-          </h2>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {categories.map((category) => (
-              <Link
-                key={category.slug}
-                href={`/products?category=${category.slug}`}
-                className="group relative flex h-24 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="absolute inset-0 bg-indigo-500/0 transition-colors group-hover:bg-indigo-500/5" />
-                <span className="text-sm font-semibold text-zinc-900 group-hover:text-indigo-600 dark:text-zinc-50 dark:group-hover:text-indigo-400 transition-colors">
-                  {category.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Featured Products Section */}
       <section id="products" className="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8 scroll-mt-20">

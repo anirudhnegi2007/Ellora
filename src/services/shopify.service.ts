@@ -17,10 +17,14 @@ export function shopifyIdToObjectId(shopifyId: string): string {
   return createHash("sha256").update(shopifyId).digest("hex").substring(0, 24);
 }
 
-// Shopify Storefront GraphQL Query
-const SHOPIFY_SYNC_QUERY = `
-  query GetProductsAndCollections {
-    collections(first: 50) {
+// Shopify Storefront GraphQL Queries
+const SHOPIFY_COLLECTIONS_QUERY = `
+  query GetCollections($cursor: String) {
+    collections(first: 250, after: $cursor) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       edges {
         node {
           id
@@ -32,7 +36,16 @@ const SHOPIFY_SYNC_QUERY = `
         }
       }
     }
-    products(first: 100) {
+  }
+`;
+
+const SHOPIFY_PRODUCTS_QUERY = `
+  query GetProducts($cursor: String) {
+    products(first: 250, after: $cursor) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       edges {
         node {
           id
@@ -194,14 +207,35 @@ async function queryShopify(query: string, variables: Record<string, unknown> = 
 }
 
 /**
- * Fetch and map products and collections from Shopify to MongoDB/Prisma compatible formats
+ * Fetch and map products and collections from Shopify to MongoDB/Prisma compatible formats using cursor pagination
  */
 export async function fetchShopifyData(): Promise<ShopifySyncData> {
   try {
-    const data = await queryShopify(SHOPIFY_SYNC_QUERY);
-    
-    const rawCollections: { node: ShopifyCollectionNode }[] = data.collections?.edges || [];
-    const rawProducts: { node: ShopifyProductNode }[] = data.products?.edges || [];
+    const rawCollections: { node: ShopifyCollectionNode }[] = [];
+    let hasNextCollection = true;
+    let collectionCursor: string | null = null;
+
+    console.log("Fetching collections from Shopify...");
+    while (hasNextCollection) {
+      const data = await queryShopify(SHOPIFY_COLLECTIONS_QUERY, { cursor: collectionCursor });
+      const edges = data.collections?.edges || [];
+      rawCollections.push(...edges);
+      hasNextCollection = data.collections?.pageInfo?.hasNextPage || false;
+      collectionCursor = data.collections?.pageInfo?.endCursor || null;
+    }
+
+    const rawProducts: { node: ShopifyProductNode }[] = [];
+    let hasNextProduct = true;
+    let productCursor: string | null = null;
+
+    console.log("Fetching products from Shopify...");
+    while (hasNextProduct) {
+      const data = await queryShopify(SHOPIFY_PRODUCTS_QUERY, { cursor: productCursor });
+      const edges = data.products?.edges || [];
+      rawProducts.push(...edges);
+      hasNextProduct = data.products?.pageInfo?.hasNextPage || false;
+      productCursor = data.products?.pageInfo?.endCursor || null;
+    }
 
     console.log(`Fetched ${rawCollections.length} collections and ${rawProducts.length} products from Shopify.`);
 

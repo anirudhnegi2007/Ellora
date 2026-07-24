@@ -60,7 +60,7 @@ async function main() {
       }
 
       const { variants, ...productData } = prod;
-      
+
       await prisma.product.create({
         data: productData,
       });
