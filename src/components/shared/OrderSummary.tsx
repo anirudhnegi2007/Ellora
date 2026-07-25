@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { calculateOrderTotals } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
@@ -35,10 +36,11 @@ export function OrderSummary({
         <div className="divide-y divide-zinc-200 dark:divide-zinc-800 max-h-60 overflow-y-auto">
           {items.map((item) => (
             <div key={item.name} className="flex py-3 items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={item.image}
                 alt={item.name}
+                width={48}
+                height={48}
                 className="h-12 w-12 rounded object-cover border border-zinc-200 dark:border-zinc-800"
               />
               <div className="flex-1 min-w-0">

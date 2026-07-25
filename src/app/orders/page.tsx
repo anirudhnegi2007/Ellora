@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingBag, Calendar, Package, MapPin, CreditCard, Banknote, Loader2, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatPrice } from "@/lib/utils";
@@ -143,11 +144,12 @@ export default function OrdersPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 relative">
+                        <Image
                           src={item.productImage}
                           alt={item.productName}
+                          width={56}
+                          height={56}
                           className="h-full w-full object-cover object-center"
                         />
                       </div>

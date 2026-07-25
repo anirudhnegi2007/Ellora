@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { getProductBySlug, getRelatedProducts } from "@/services/product.service";
 import { ProductCard } from "@/features/products/components/ProductCard";
@@ -73,11 +74,14 @@ export default async function ProductPage({ params }: PageProps) {
       <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
         {/* Left Column: Image */}
         <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 aspect-square relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-cover object-center"
+            fill
+            priority
+            quality={85}
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover object-center"
           />
         </div>
 

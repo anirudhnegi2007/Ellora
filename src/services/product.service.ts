@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
 import type { ProductSearchInput } from "@/validations/product.schema";
@@ -147,7 +148,9 @@ export async function getProducts(
   };
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
+export const getProductBySlug = cache(async function (
+  slug: string
+): Promise<Product | null> {
   const product = await db.product.findUnique({
     where: { slug },
     include: {
@@ -158,9 +161,11 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   });
 
   return product ? mapProduct(product) : null;
-}
+});
 
-export async function getProductById(id: string): Promise<Product | null> {
+export const getProductById = cache(async function (
+  id: string
+): Promise<Product | null> {
   const product = await db.product.findUnique({
     where: { id },
     include: {
@@ -171,9 +176,9 @@ export async function getProductById(id: string): Promise<Product | null> {
   });
 
   return product ? mapProduct(product) : null;
-}
+});
 
-export async function getRelatedProducts(
+export const getRelatedProducts = cache(async function (
   productId: string,
   categoryId: string,
   limit = 4
@@ -191,9 +196,11 @@ export async function getRelatedProducts(
   });
 
   return products.map(mapProductListItem);
-}
+});
 
-export async function getFeaturedProducts(limit = 6): Promise<ProductListItem[]> {
+export const getFeaturedProducts = cache(async function (
+  limit = 6
+): Promise<ProductListItem[]> {
   const products = await db.product.findMany({
     take: limit,
     orderBy: { createdAt: "desc" },
@@ -204,8 +211,8 @@ export async function getFeaturedProducts(limit = 6): Promise<ProductListItem[]>
   });
 
   return products.map(mapProductListItem);
-}
+});
 
-export async function getAllProductSlugs(): Promise<{ slug: string }[]> {
+export const getAllProductSlugs = cache(async function (): Promise<{ slug: string }[]> {
   return db.product.findMany({ select: { slug: true } });
-}
+});

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getFeaturedProducts } from "@/services/product.service";
 import { ProductCard } from "@/features/products/components/ProductCard";
 import { AlertCircle } from "lucide-react";
@@ -46,11 +47,14 @@ export default async function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-zinc-900 text-white py-24 sm:py-32">
         <div className="absolute inset-0 opacity-40">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&auto=format&fit=crop&q=80"
             alt="Hero background"
-            className="h-full w-full object-cover object-center"
+            fill
+            priority
+            quality={85}
+            sizes="100vw"
+            className="object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-900/80 to-transparent" />
         </div>

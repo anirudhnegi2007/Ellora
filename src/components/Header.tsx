@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { SearchBar } from "@/features/products/components/SearchBar";
@@ -112,9 +113,11 @@ export default function Header() {
                 aria-label="User menu"
               >
                 {session.user.image ? (
-                  <img
+                  <Image
                     src={session.user.image}
                     alt={session.user.name ?? "User"}
+                    width={32}
+                    height={32}
                     className="h-8 w-8 rounded-full border border-zinc-200 object-cover transition-all duration-200 group-hover:scale-105 group-hover:border-indigo-500 dark:border-zinc-800 dark:group-hover:border-indigo-400"
                   />
                 ) : (
@@ -225,9 +228,11 @@ export default function Header() {
               <div className="mt-2 flex flex-col gap-3.5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                 <div className="flex items-center gap-3 px-1">
                   {session.user.image ? (
-                    <img
+                    <Image
                       src={session.user.image}
                       alt={session.user.name ?? "User"}
+                      width={40}
+                      height={40}
                       className="h-10 w-10 rounded-full border border-zinc-200 object-cover dark:border-zinc-800"
                     />
                   ) : (

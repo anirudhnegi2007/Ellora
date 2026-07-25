@@ -1,7 +1,8 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 import type { Category } from "@/types";
 
-export async function getCategories(): Promise<Category[]> {
+export const getCategories = cache(async function (): Promise<Category[]> {
   const categories = await db.category.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { products: true } } },
@@ -14,9 +15,11 @@ export async function getCategories(): Promise<Category[]> {
     image: c.image,
     productCount: c._count.products,
   }));
-}
+});
 
-export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+export const getCategoryBySlug = cache(async function (
+  slug: string
+): Promise<Category | null> {
   const category = await db.category.findUnique({
     where: { slug },
     include: { _count: { select: { products: true } } },
@@ -31,4 +34,4 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     image: category.image,
     productCount: category._count.products,
   };
-}
+});

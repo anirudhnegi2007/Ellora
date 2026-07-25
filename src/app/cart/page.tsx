@@ -3,6 +3,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
 
@@ -54,11 +55,12 @@ export default function CartPage() {
               className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
             >
               {/* Product Image */}
-              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 relative">
+                <Image
                   src={item.product.image}
                   alt={item.product.name}
+                  width={80}
+                  height={80}
                   className="h-full w-full object-cover object-center"
                 />
               </div>

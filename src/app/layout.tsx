@@ -5,6 +5,7 @@ import { Providers } from "@/context/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Toaster } from "sonner";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
           <main className="flex-grow flex flex-col">{children}</main>
           <Footer />
           <Toaster position="top-right" richColors />
+          <SpeedInsights />
         </Providers>
       </body>
     </html>
