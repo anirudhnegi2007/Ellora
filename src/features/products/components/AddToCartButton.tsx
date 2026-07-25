@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import type { Product } from "@/types";
+import { Minus, Plus, Check } from "lucide-react";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -44,9 +45,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
           className="p-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
           aria-label="Decrease quantity"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4" />
-          </svg>
+          <Minus className="h-4 w-4" />
         </button>
         <span className="text-sm font-bold text-zinc-900 dark:text-white">{quantity}</span>
         <button
@@ -54,9 +53,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
           className="p-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
           aria-label="Increase quantity"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="h-4 w-4" />
         </button>
       </div>
 
@@ -71,9 +68,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
       >
         {added ? (
           <span className="flex items-center gap-2">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="h-4 w-4" />
             Added to Cart
           </span>
         ) : (

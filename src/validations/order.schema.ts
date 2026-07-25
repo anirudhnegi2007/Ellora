@@ -7,6 +7,7 @@ export const checkoutSchema = z.object({
   city: z.string().min(2, "City is required"),
   zip: z.string().min(3, "Postal code is required"),
   couponCode: z.string().optional(),
+  paymentMethod: z.enum(["ONLINE", "COD"]).optional(),
   items: z
     .array(
       z.object({

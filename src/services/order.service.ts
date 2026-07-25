@@ -56,6 +56,7 @@ function mapOrder(order: {
     shippingCity: order.shippingCity,
     shippingZip: order.shippingZip,
     couponCode: order.couponCode,
+    paymentMethod: (order as any).paymentMethod ?? (order.razorpayOrderId ? "ONLINE" : "COD"),
     razorpayOrderId: order.razorpayOrderId,
     razorpayPaymentId: order.razorpayPaymentId,
     createdAt: order.createdAt.toISOString(),

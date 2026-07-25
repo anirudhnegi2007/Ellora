@@ -18,20 +18,6 @@ export interface Category {
   productCount?: number;
 }
 
-export interface WishlistItem {
-  id: string;
-  productId: string;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    image: string;
-    category: { name: string; slug: string };
-    rating: { rate: number; count: number };
-  };
-  createdAt: string;
-}
 
 export interface CouponValidation {
   valid: boolean;

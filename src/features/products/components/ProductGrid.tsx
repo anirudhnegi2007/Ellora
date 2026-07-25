@@ -15,6 +15,7 @@
 import type { ProductListItem } from "@/types";
 import { ProductCard } from "./ProductCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { SearchX } from "lucide-react";
 
 interface ProductGridProps {
   products: ProductListItem[];
@@ -24,21 +25,7 @@ export function ProductGrid({ products }: ProductGridProps) {
   if (products.length === 0) {
     return (
       <EmptyState
-        icon={
-          <svg
-            className="h-12 w-12 text-zinc-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803a7.5 7.5 0 0 0 10.607 10.607Z"
-            />
-          </svg>
-        }
+        icon={<SearchX className="h-12 w-12 text-zinc-400" />}
         title="No products found"
         description="Try adjusting your search or filters to find what you're looking for."
       />

@@ -4,31 +4,28 @@
 import React from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart();
+  const { cart, updateQuantity, removeFromCart, totalPrice, totalItems, isHydrated } = useCart();
 
   const shipping: number = totalItems > 0 ? 0 : 0; // Free shipping
   const tax = totalPrice * 0.08; // 8% tax
   const grandTotal = totalPrice + shipping + tax;
 
+  if (!isHydrated) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 w-full flex-grow flex flex-col items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      </div>
+    );
+  }
+
   if (cart.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center">
         <div className="rounded-full bg-zinc-100 p-6 dark:bg-zinc-900">
-          <svg
-            className="h-12 w-12 text-zinc-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-            />
-          </svg>
+          <ShoppingBag className="h-12 w-12 text-zinc-400" />
         </div>
         <h2 className="mt-6 text-xl font-bold tracking-tight text-zinc-900 dark:text-white">Your cart is empty</h2>
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
@@ -72,7 +69,11 @@ export default function CartPage() {
                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400">
                     <Link href={`/products/${item.product.slug}`}>{item.product.name}</Link>
                   </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-500">{item.product.category?.name ?? ""}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                    {typeof item.product.category === "string"
+                      ? item.product.category
+                      : item.product.category?.name ?? ""}
+                  </p>
                   <p className="text-sm font-bold text-zinc-900 dark:text-white">${item.product.price.toFixed(2)}</p>
                 </div>
 
@@ -84,9 +85,7 @@ export default function CartPage() {
                       className="p-0.5 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
                       aria-label="Decrease quantity"
                     >
-                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4" />
-                      </svg>
+                      <Minus className="h-3 w-3" />
                     </button>
                     <span className="text-xs font-bold text-zinc-900 dark:text-white">{item.quantity}</span>
                     <button
@@ -94,9 +93,7 @@ export default function CartPage() {
                       className="p-0.5 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
                       aria-label="Increase quantity"
                     >
-                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                      </svg>
+                      <Plus className="h-3 w-3" />
                     </button>
                   </div>
 
@@ -106,9 +103,7 @@ export default function CartPage() {
                     className="p-1.5 rounded-lg border border-zinc-200 text-zinc-500 hover:border-red-200 hover:text-red-600 transition-colors dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-red-950 dark:hover:text-red-400"
                     aria-label="Remove item"
                   >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>

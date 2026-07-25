@@ -25,6 +25,7 @@ export interface Order {
   shippingCity: string;
   shippingZip: string;
   couponCode?: string | null;
+  paymentMethod?: "ONLINE" | "COD";
   razorpayOrderId?: string | null;
   razorpayPaymentId?: string | null;
   items: OrderItem[];
