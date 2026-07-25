@@ -23,13 +23,11 @@ function mapOrder(order: {
   tax: number;
   shipping: number;
   total: number;
-  discount: number;
   email: string;
   shippingName: string;
   shippingAddress: string;
   shippingCity: string;
   shippingZip: string;
-  couponCode: string | null;
   razorpayOrderId?: string | null;
   razorpayPaymentId?: string | null;
   createdAt: Date;
@@ -49,13 +47,11 @@ function mapOrder(order: {
     tax: order.tax,
     shipping: order.shipping,
     total: order.total,
-    discount: order.discount,
     email: order.email,
     shippingName: order.shippingName,
     shippingAddress: order.shippingAddress,
     shippingCity: order.shippingCity,
     shippingZip: order.shippingZip,
-    couponCode: order.couponCode,
     paymentMethod: (order as any).paymentMethod ?? (order.razorpayOrderId ? "ONLINE" : "COD"),
     razorpayOrderId: order.razorpayOrderId,
     razorpayPaymentId: order.razorpayPaymentId,
@@ -106,17 +102,8 @@ export async function createOrder(
     }
   }
 
-  let discount = 0;
-  if (input.couponCode) {
-    const coupon = await validateCoupon(input.couponCode, input.items.reduce(
-      (sum, i) => sum + i.price * i.quantity,
-      0
-    ));
-    discount = coupon.discountAmount;
-  }
-
   const subtotal = input.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const totals = calculateOrderTotals(subtotal, discount);
+  const totals = calculateOrderTotals(subtotal);
 
   const order = await db.$transaction(async (tx) => {
     for (const item of input.items) {
@@ -129,13 +116,6 @@ export async function createOrder(
           });
         }
       }
-    }
-
-    if (input.couponCode) {
-      await tx.coupon.update({
-        where: { code: input.couponCode.toUpperCase() },
-        data: { usedCount: { increment: 1 } },
-      });
     }
 
     return tx.order.create({
@@ -151,8 +131,6 @@ export async function createOrder(
         tax: totals.tax,
         shipping: totals.shipping,
         total: totals.total,
-        discount: totals.discount,
-        couponCode: input.couponCode?.toUpperCase() ?? null,
         status: paymentDetails?.paymentStatus === "PAID" ? "CONFIRMED" : "PENDING",
         paymentStatus: paymentDetails?.paymentStatus ?? "PENDING",
         razorpayOrderId: paymentDetails?.razorpayOrderId ?? null,
@@ -194,39 +172,3 @@ export async function getOrdersByUser(userId: string): Promise<Order[]> {
   return orders.map(mapOrder);
 }
 
-export async function validateCoupon(code: string, subtotal: number) {
-  const coupon = await db.coupon.findUnique({
-    where: { code: code.toUpperCase() },
-  });
-
-  if (!coupon || !coupon.isActive) {
-    throw validationError("Invalid coupon code");
-  }
-
-  if (coupon.expiresAt && coupon.expiresAt < new Date()) {
-    throw validationError("Coupon has expired");
-  }
-
-  if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-    throw validationError("Coupon usage limit reached");
-  }
-
-  if (subtotal < coupon.minOrderValue) {
-    throw validationError(
-      `Minimum order value of $${coupon.minOrderValue.toFixed(2)} required`
-    );
-  }
-
-  const discountAmount =
-    coupon.discountType === "PERCENTAGE"
-      ? subtotal * (coupon.discountValue / 100)
-      : coupon.discountValue;
-
-  return {
-    valid: true,
-    code: coupon.code,
-    discountType: coupon.discountType,
-    discountValue: coupon.discountValue,
-    discountAmount: Math.min(discountAmount, subtotal),
-  };
-}

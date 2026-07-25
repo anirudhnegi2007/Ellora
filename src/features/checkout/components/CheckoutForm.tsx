@@ -35,10 +35,6 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const [isCodSubmitting, setIsCodSubmitting] = useState(false);
   const [codError, setCodError] = useState<string | null>(null);
 
-  const [discount, setDiscount] = useState(0);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponError, setCouponError] = useState<string | null>(null);
-
   // Address-related states
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -52,7 +48,6 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       address: "",
       city: "",
       zip: "",
-      couponCode: "",
       paymentMethod: "ONLINE",
       items: cart.map((item) => ({
         productId: item.product.id,
@@ -115,27 +110,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     form.setValue("zip", "");
   };
 
-  async function applyCoupon() {
-    if (!couponCode.trim()) return;
-    setCouponError(null);
-    try {
-      const res = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, subtotal: totalPrice }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCouponError(data.message || "Invalid coupon");
-        setDiscount(0);
-        return;
-      }
-      setDiscount(data.discountAmount);
-      form.setValue("couponCode", couponCode);
-    } catch {
-      setCouponError("Failed to validate coupon");
-    }
-  }
+
 
   async function onSubmit(data: CheckoutInput) {
     const checkoutPayload: CheckoutInput = {
@@ -429,27 +404,7 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Coupon Code</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter coupon code"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                />
-                <Button type="button" variant="outline" onClick={applyCoupon}>
-                  Apply
-                </Button>
-              </div>
-              {couponError && <p className="text-xs text-red-500 mt-2">{couponError}</p>}
-              {discount > 0 && (
-                <p className="text-xs text-emerald-600 mt-2 font-medium">Coupon applied successfully!</p>
-              )}
-            </CardContent>
-          </Card>
+
 
           {paymentMethod === "ONLINE" ? (
             <div className="flex items-center gap-3 p-4 rounded-xl border border-indigo-100 bg-indigo-50/50 dark:border-indigo-950 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200">
@@ -473,7 +428,6 @@ export function CheckoutForm({ onSuccess }: CheckoutFormProps) {
         <div className="lg:col-span-5">
           <OrderSummary
             subtotal={totalPrice}
-            discount={discount}
             actionLabel={paymentMethod === "COD" ? "Place Order (Cash on Delivery)" : "Pay with Razorpay"}
             onAction={form.handleSubmit(onSubmit)}
             isSubmitting={activeSubmitting}

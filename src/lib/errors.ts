@@ -6,7 +6,6 @@ export type AppErrorCode =
   | "CONFLICT"
   | "INTERNAL_ERROR"
   | "INSUFFICIENT_INVENTORY"
-  | "INVALID_COUPON"
   | "INVALID_PAYMENT_SIGNATURE";
 
 export interface AppError {

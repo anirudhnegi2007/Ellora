@@ -6,7 +6,6 @@ export const checkoutSchema = z.object({
   address: z.string().min(5, "Address must be at least 5 characters"),
   city: z.string().min(2, "City is required"),
   zip: z.string().min(3, "Postal code is required"),
-  couponCode: z.string().optional(),
   paymentMethod: z.enum(["ONLINE", "COD"]).optional(),
   items: z
     .array(
@@ -20,10 +19,3 @@ export const checkoutSchema = z.object({
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
-
-export const couponSchema = z.object({
-  code: z.string().min(1, "Coupon code is required"),
-  subtotal: z.number().min(0),
-});
-
-export type CouponInput = z.infer<typeof couponSchema>;

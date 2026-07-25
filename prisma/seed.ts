@@ -20,7 +20,6 @@ async function main() {
   await prisma.productVariant.deleteMany({});
   await prisma.product.deleteMany({});
   await prisma.category.deleteMany({});
-  await prisma.coupon.deleteMany({});
 
   console.log("Fetching dynamic products and collections from Shopify...");
   try {
@@ -96,31 +95,7 @@ async function main() {
     throw error;
   }
 
-  console.log("Seeding coupons...");
-  const couponsData = [
-    {
-      id: "64a0f443b7e77a28e8267231",
-      code: "SUMMER10",
-      discountType: "PERCENTAGE" as const,
-      discountValue: 10,
-      minOrderValue: 50,
-      isActive: true
-    },
-    {
-      id: "64a0f443b7e77a28e8267232",
-      code: "WELCOME5",
-      discountType: "FIXED" as const,
-      discountValue: 5,
-      minOrderValue: 20,
-      isActive: true
-    }
-  ];
 
-  for (const coupon of couponsData) {
-    await prisma.coupon.create({
-      data: coupon,
-    });
-  }
 
   console.log("Database seeded successfully with Shopify data!");
 }

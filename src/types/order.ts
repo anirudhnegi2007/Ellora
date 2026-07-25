@@ -18,13 +18,11 @@ export interface Order {
   tax: number;
   shipping: number;
   total: number;
-  discount: number;
   email: string;
   shippingName: string;
   shippingAddress: string;
   shippingCity: string;
   shippingZip: string;
-  couponCode?: string | null;
   paymentMethod?: "ONLINE" | "COD";
   razorpayOrderId?: string | null;
   razorpayPaymentId?: string | null;

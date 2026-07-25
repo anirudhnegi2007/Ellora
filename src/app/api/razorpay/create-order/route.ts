@@ -3,7 +3,6 @@ import { handleApiError, validationError } from "@/lib/errors";
 import { getRazorpayInstance } from "@/lib/razorpay";
 import { db } from "@/lib/db";
 import { calculateOrderTotals } from "@/lib/pricing";
-import { validateCoupon } from "@/services/order.service";
 import { checkoutSchema } from "@/validations/order.schema";
 
 const IS_VALID_OBJECT_ID = /^[0-9a-fA-F]{24}$/;
@@ -43,14 +42,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Calculate coupon discount
-    let discount = 0;
-    if (input.couponCode) {
-      const coupon = await validateCoupon(input.couponCode, subtotal);
-      discount = coupon.discountAmount;
-    }
-
-    const totals = calculateOrderTotals(subtotal, discount);
+    const totals = calculateOrderTotals(subtotal);
     const currency = process.env.NEXT_PUBLIC_CURRENCY || "INR";
     const amountInSubunits = Math.round(totals.total * 100);
 

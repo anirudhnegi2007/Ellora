@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 
 interface OrderSummaryProps {
   subtotal: number;
-  discount?: number;
   actionLabel?: string;
   actionHref?: string;
   onAction?: () => void;
@@ -19,7 +18,6 @@ interface OrderSummaryProps {
 
 export function OrderSummary({
   subtotal,
-  discount = 0,
   actionLabel = "Proceed to Checkout",
   actionHref,
   onAction,
@@ -27,7 +25,7 @@ export function OrderSummary({
   showItems = false,
   items = [],
 }: OrderSummaryProps) {
-  const totals = calculateOrderTotals(subtotal, discount);
+  const totals = calculateOrderTotals(subtotal);
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
@@ -64,12 +62,7 @@ export function OrderSummary({
             {formatPrice(totals.subtotal)}
           </span>
         </div>
-        {discount > 0 && (
-          <div className="flex justify-between text-emerald-600">
-            <span>Discount</span>
-            <span className="font-semibold">-{formatPrice(discount)}</span>
-          </div>
-        )}
+
         <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
           <span>Shipping</span>
           <span className="font-semibold text-zinc-900 dark:text-white">

@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Star } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/services/product.service";
 import { ProductCard } from "@/features/products/components/ProductCard";
 import { AddToCartButton } from "@/features/products/components/AddToCartButton";
+import { ProductReviews } from "@/features/products/components/ProductReviews";
+import { Rating } from "@/components/shared/Rating";
 import { formatPrice } from "@/lib/utils";
 
 interface PageProps {
@@ -98,20 +99,10 @@ export default async function ProductPage({ params }: PageProps) {
               {formatPrice(product.price)}
             </p>
 
-            {/* Ratings */}
-            {product.rating.count > 0 && (
-              <div className="mt-4 flex items-center gap-1.5">
-                <div className="flex items-center text-amber-500">
-                  <Star className="h-5 w-5 fill-current" />
-                  <span className="text-sm font-medium ml-1 text-zinc-700 dark:text-zinc-300">
-                    {product.rating.rate} / 5.0
-                  </span>
-                </div>
-                <span className="text-sm text-zinc-500 dark:text-zinc-500">
-                  ({product.rating.count} verified reviews)
-                </span>
-              </div>
-            )}
+            {/* Ratings Summary */}
+            <div className="mt-3 flex items-center gap-2">
+              <Rating rating={product.rating.rate} count={product.rating.count} size="md" />
+            </div>
 
             {/* Stock badge */}
             <div className="mt-3">
@@ -160,6 +151,9 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Product Reviews & Customer Ratings Section */}
+      <ProductReviews productId={product.id} initialRating={product.rating} />
 
       {/* Related Products */}
       {related.length > 0 && (

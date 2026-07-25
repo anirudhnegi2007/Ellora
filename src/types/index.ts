@@ -19,10 +19,3 @@ export interface Category {
 }
 
 
-export interface CouponValidation {
-  valid: boolean;
-  code: string;
-  discountType: "PERCENTAGE" | "FIXED";
-  discountValue: number;
-  discountAmount: number;
-}

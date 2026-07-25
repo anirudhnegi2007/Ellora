@@ -160,8 +160,6 @@ model Order {
   shippingAddress   String
   shippingCity      String
   shippingZip       String
-  couponCode        String?
-  discount          Float         @default(0)
   razorpayOrderId   String?
   razorpayPaymentId String?
   razorpaySignature String?
@@ -185,25 +183,6 @@ model OrderItem {
 }
 
 
-enum DiscountType {
-  PERCENTAGE
-  FIXED
-}
-
-model Coupon {
-  id            String       @id @map("_id") @db.ObjectId
-  code          String       @unique
-  discountType  DiscountType
-  discountValue Float
-  minOrderValue Float        @default(0)
-  maxUses       Int?
-  usedCount     Int          @default(0)
-  expiresAt     DateTime?
-  isActive      Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-
-  @@map("coupons")
-}
 
 model Address {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
