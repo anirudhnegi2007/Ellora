@@ -165,15 +165,76 @@ export interface ShopifySyncData {
   }[];
 }
 
+let cachedAccessToken: { token: string; expiresAt: number } | null = null;
+
+async function getShopifyToken(): Promise<{ token: string; headerName: string } | null> {
+  const clientId = (process.env.SHOPIFY_CLIENT_ID || process.env.Client_ID || "").trim();
+  const clientSecret = (process.env.SHOPIFY_CLIENT_SECRET || process.env.Client_Secret || "").trim();
+  const domain = (process.env.SHOPIFY_STORE_DOMAIN || "mock.shop").trim();
+
+  // 1. Client Credentials OAuth flow using Client_ID & Client_Secret
+  if (clientId && clientSecret && domain && domain !== "mock.shop") {
+    if (cachedAccessToken && Date.now() < cachedAccessToken.expiresAt) {
+      return { token: cachedAccessToken.token, headerName: "Shopify-Storefront-Private-Token" };
+    }
+
+    try {
+      console.log(`Requesting OAuth Access Token from Shopify (${domain})...`);
+      const params = new URLSearchParams();
+      params.append("grant_type", "client_credentials");
+      params.append("client_id", clientId);
+      params.append("client_secret", clientSecret);
+
+      const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          const expiresInMs = (data.expires_in || 86400) * 1000 - 60000;
+          cachedAccessToken = {
+            token: data.access_token,
+            expiresAt: Date.now() + expiresInMs,
+          };
+          console.log(`Successfully obtained Shopify Storefront Private Access Token (${data.access_token.substring(0, 10)}...)`);
+          return { token: data.access_token, headerName: "Shopify-Storefront-Private-Token" };
+        }
+      } else {
+        const errorText = await res.text();
+        console.warn(`OAuth token request failed with status ${res.status}: ${errorText}`);
+      }
+    } catch (err: any) {
+      console.warn(`Failed to obtain OAuth access token: ${err?.message || err}`);
+    }
+  }
+
+  // 2. Direct env token fallback if set
+  const envToken = (process.env.SHOPIFY_ADMIN_ACCESS_TOKEN || process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || "").trim();
+  if (envToken) {
+    if (envToken.startsWith("shpat_")) {
+      return { token: envToken, headerName: "X-Shopify-Access-Token" };
+    }
+    if (envToken.startsWith("shpua_")) {
+      return { token: envToken, headerName: "Shopify-Storefront-Private-Token" };
+    }
+    return { token: envToken, headerName: "X-Shopify-Storefront-Access-Token" };
+  }
+
+  return null;
+}
+
 /**
  * Execute a GraphQL query against the Shopify Storefront API.
- * Falls back to mock.shop if SHOPIFY_STORE_DOMAIN is mock.shop or not configured.
+ * Falls back to mock.shop if SHOPIFY_STORE_DOMAIN fails (e.g. 401 Unauthorized) or is not configured.
  */
 async function queryShopify(query: string, variables: Record<string, unknown> = {}) {
   const domain = SHOPIFY_STORE_DOMAIN.trim();
   const isMockShop = domain === "mock.shop" || domain.includes("mock.shop") || !domain;
-  
-  const endpoint = isMockShop
+
+  let endpoint = isMockShop
     ? "https://mock.shop/api"
     : `https://${domain}/api/${SHOPIFY_API_VERSION}/graphql.json`;
 
@@ -181,29 +242,59 @@ async function queryShopify(query: string, variables: Record<string, unknown> = 
     "Content-Type": "application/json",
   };
 
-  if (!isMockShop && SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
-    headers["X-Shopify-Storefront-Access-Token"] = SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+  if (!isMockShop) {
+    const auth = await getShopifyToken();
+    if (auth) {
+      if (auth.headerName === "X-Shopify-Access-Token") {
+        endpoint = `https://${domain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`;
+      }
+      headers[auth.headerName] = auth.token;
+    }
   }
 
-  console.log(`Fetching from Shopify Storefront API: ${endpoint}`);
+  console.log(`Fetching from Shopify API: ${endpoint}`);
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ query, variables }),
-  });
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query, variables }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Shopify API responded with status ${response.status}: ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Shopify API responded with status ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    if (result.errors) {
+      throw new Error(`Shopify GraphQL errors: ${JSON.stringify(result.errors)}`);
+    }
+
+    return result.data;
+  } catch (error: any) {
+    if (!isMockShop) {
+      console.warn(`[Shopify Sync Warning] Failed to query custom domain (${endpoint}): ${error?.message || error}. Falling back to mock.shop API...`);
+      const mockEndpoint = "https://mock.shop/api";
+      const mockResponse = await fetch(mockEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, variables }),
+      });
+
+      if (!mockResponse.ok) {
+        const errText = await mockResponse.text();
+        throw new Error(`mock.shop API responded with status ${mockResponse.status}: ${errText}`);
+      }
+
+      const mockResult = await mockResponse.json();
+      if (mockResult.errors) {
+        throw new Error(`mock.shop GraphQL errors: ${JSON.stringify(mockResult.errors)}`);
+      }
+      return mockResult.data;
+    }
+    throw error;
   }
-
-  const result = await response.json();
-  if (result.errors) {
-    throw new Error(`Shopify GraphQL errors: ${JSON.stringify(result.errors)}`);
-  }
-
-  return result.data;
 }
 
 /**
@@ -302,16 +393,17 @@ export async function fetchShopifyData(): Promise<ShopifySyncData> {
       const price = parseFloat(prod.priceRange?.minVariantPrice?.amount || "0");
 
       // Map variants
-      const variants = (prod.variants?.edges || []).map((vEdge) => {
+      const variants = (prod.variants?.edges || []).map((vEdge, vIdx) => {
         const v = vEdge.node;
-        const vId = shopifyIdToObjectId(v.id);
+        const rawId = v.id ? `${prod.id}_${v.id}` : `${prod.id}_var_${vIdx}`;
+        const vId = shopifyIdToObjectId(rawId);
         const vPrice = parseFloat(v.price?.amount || prod.priceRange?.minVariantPrice?.amount || "0");
         const vInventory = v.quantityAvailable ?? 50; // Fallback inventory per variant
         
         return {
           id: vId,
           name: v.title,
-          sku: v.sku || `${prod.handle}-${vId.substring(0, 6)}`,
+          sku: v.sku || `${prod.handle}-${vId.substring(0, 8)}`,
           price: vPrice,
           inventory: vInventory,
         };
