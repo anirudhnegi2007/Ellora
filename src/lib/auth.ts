@@ -29,6 +29,7 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      redirectURI: (process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://ellora-alpha.vercel.app") + "/api/auth/callback/google",
     },
   },
   session: {
