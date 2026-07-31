@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-const protectedRoutes = ["/account", "/orders"];
+const protectedRoutes = ["/account", "/orders", "/admin", "/merchant"];
 const authRoutes = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
@@ -29,5 +29,12 @@ export async function middleware(request: NextRequest) {
 export const proxy = middleware;
 
 export const config = {
-  matcher: ["/account/:path*", "/orders/:path*", "/login", "/register"],
+  matcher: [
+    "/account/:path*",
+    "/orders/:path*",
+    "/login",
+    "/register",
+    "/admin/:path*",
+    "/merchant/:path*",
+  ],
 };
