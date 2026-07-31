@@ -23,6 +23,7 @@ export default async function AdminLayout({
     { name: "Overview", href: "/admin", icon: LayoutDashboard },
     { name: "User Management", href: "/admin/users", icon: Users },
     { name: "Global Orders", href: "/admin/orders", icon: ShoppingBag },
+    { name: "Category Management", href: "/admin/categories", icon: FolderTree },
     { name: "Merchant Portal", href: "/merchant", icon: Package },
   ];
 
