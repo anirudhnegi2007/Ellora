@@ -47,6 +47,7 @@ function mapProduct(
     createdAt: Date;
     category: { id: string; name: string; slug: string };
     reviews: { rating: number }[];
+    merchant?: { id: string; name: string; email: string } | null;
     variants?: {
       id: string;
       name: string;
@@ -67,6 +68,7 @@ function mapProduct(
     inventory: product.inventory,
     category: product.category,
     rating: computeRating(product.reviews),
+    merchant: product.merchant || null,
     variants: product.variants,
     createdAt: product.createdAt.toISOString(),
   };
@@ -155,6 +157,7 @@ export const getProductBySlug = cache(async function (
     where: { slug },
     include: {
       category: { select: { id: true, name: true, slug: true } },
+      merchant: { select: { id: true, name: true, email: true } },
       reviews: { select: { rating: true } },
       variants: true,
     },
@@ -170,6 +173,7 @@ export const getProductById = cache(async function (
     where: { id },
     include: {
       category: { select: { id: true, name: true, slug: true } },
+      merchant: { select: { id: true, name: true, email: true } },
       reviews: { select: { rating: true } },
       variants: true,
     },

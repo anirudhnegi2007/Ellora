@@ -16,7 +16,6 @@ import {
   Menu,
   X,
   ShoppingCart,
-  Store,
   Shield,
 } from "lucide-react";
 
@@ -168,22 +167,11 @@ export default function Header() {
                       <ShoppingBag className="h-4 w-4 opacity-75 group-hover:text-violet-500 transition-colors" />
                       <span>My Orders</span>
                     </Link>
-                    {((session.user as { role?: string }).role === "MERCHANT" ||
-                      (session.user as { role?: string }).role === "ADMIN") && (
-                      <Link
-                        href="/merchant"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-purple-600 hover:bg-purple-50/50 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-950/20 dark:hover:text-purple-300 transition-colors"
-                      >
-                        <Store className="h-4 w-4 opacity-75 group-hover:text-purple-500 transition-colors" />
-                        <span>Merchant Portal</span>
-                      </Link>
-                    )}
                     {(session.user as { role?: string }).role === "ADMIN" && (
                       <Link
                         href="/admin"
                         onClick={() => setIsProfileOpen(false)}
-                        className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-amber-600 hover:bg-amber-50/50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/20 dark:hover:text-amber-300 transition-colors"
+                        className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-amber-600 hover:bg-amber-50/50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-300 transition-colors"
                       >
                         <Shield className="h-4 w-4 opacity-75 group-hover:text-amber-500 transition-colors" />
                         <span>Admin Portal</span>
@@ -290,6 +278,17 @@ export default function Header() {
                     <ShoppingBag className="h-4.5 w-4.5 opacity-70" />
                     My Orders
                   </Link>
+
+                  {(session.user as { role?: string }).role === "ADMIN" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+                    >
+                      <Shield className="h-4.5 w-4.5 opacity-80" />
+                      Admin Portal
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);

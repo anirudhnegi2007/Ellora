@@ -17,6 +17,12 @@ export interface ProductVariant {
   inventory: number;
 }
 
+export interface ProductMerchant {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -28,6 +34,7 @@ export interface Product {
   inventory: number;
   category: ProductCategory;
   rating: ProductRating;
+  merchant?: ProductMerchant | null;
   variants?: ProductVariant[];
   createdAt?: string;
 }

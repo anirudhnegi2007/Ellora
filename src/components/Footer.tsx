@@ -57,6 +57,7 @@ export default function Footer() {
               Support
             </h3>
             <ul className="mt-4 space-y-2">
+
               <li>
                 <span className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">
                   Contact Us

@@ -24,7 +24,17 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
-  const [error, setError] = useState<string | null>(null);
+  const urlError = searchParams.get("error");
+
+  const getInitialError = (code: string | null) => {
+    if (!code) return null;
+    if (code === "account_not_linked") {
+      return "An account with this email address already exists. Please sign in with your email and password instead.";
+    }
+    return code;
+  };
+
+  const [error, setError] = useState<string | null>(getInitialError(urlError));
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 

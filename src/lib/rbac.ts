@@ -68,7 +68,6 @@ export async function requireRole(allowedRoles: Role[]): Promise<AppUser> {
 
   if (!allowedRoles.includes(user.role)) {
     if (user.role === "ADMIN") redirect("/admin");
-    if (user.role === "MERCHANT") redirect("/merchant");
     redirect("/");
   }
 
