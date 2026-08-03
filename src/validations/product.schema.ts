@@ -6,8 +6,26 @@ export const productSearchSchema = z.object({
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
   minRating: z.coerce.number().min(1).max(5).optional(),
+  inStock: z
+    .preprocess((val) => {
+      if (val === "true" || val === true) return true;
+      if (val === "false" || val === false) return false;
+      return undefined;
+    }, z.boolean().optional())
+    .optional(),
   sort: z
-    .enum(["price-asc", "price-desc", "rating", "newest", "name"])
+    .enum([
+      "price-asc",
+      "price-desc",
+      "rating-desc",
+      "rating-asc",
+      "rating",
+      "newest",
+      "oldest",
+      "name-asc",
+      "name-desc",
+      "name",
+    ])
     .optional()
     .default("newest"),
   page: z.coerce.number().min(1).optional().default(1),

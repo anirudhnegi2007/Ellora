@@ -11,10 +11,77 @@ import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {
   product: ProductListItem;
+  viewMode?: "grid" | "list";
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const { addToCart } = useCart();
+
+  if (viewMode === "list") {
+    return (
+      <div className="group relative flex flex-col sm:flex-row overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+        <Link
+          href={`/products/${product.slug}`}
+          className="relative block aspect-square w-full sm:w-48 sm:min-w-48 overflow-hidden bg-zinc-100"
+        >
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 100vw, 200px"
+            className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+          />
+          <Badge className="absolute left-3 top-3">{product.category.name}</Badge>
+        </Link>
+
+        <div className="flex flex-1 flex-col justify-between p-5">
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+                <Link
+                  href={`/products/${product.slug}`}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  {product.name}
+                </Link>
+              </h3>
+              <span className="text-lg font-extrabold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">
+                {formatPrice(product.price)}
+              </span>
+            </div>
+
+            <Rating
+              rating={product.rating.rate}
+              count={product.rating.count}
+              className="mt-2"
+            />
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-zinc-800/80">
+            <span
+              className={`text-xs font-semibold ${
+                product.inventory > 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-500"
+              }`}
+            >
+              {product.inventory > 0
+                ? `In Stock (${product.inventory} available)`
+                : "Out of Stock"}
+            </span>
+
+            <Button
+              size="sm"
+              onClick={() => addToCart(product, 1)}
+              disabled={product.inventory <= 0}
+            >
+              {product.inventory <= 0 ? "Out of Stock" : "Add to Cart"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">

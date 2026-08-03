@@ -77,9 +77,10 @@ function mapProduct(
 export async function getProducts(
   params: ProductSearchInput
 ): Promise<PaginatedResponse<ProductListItem>> {
-  const { q, category, minPrice, maxPrice, minRating, sort, page, limit } = params;
+  const { q, category, minPrice, maxPrice, minRating, inStock, sort, page, limit } = params;
   const take = limit ?? PRODUCTS_PER_PAGE;
-  const skip = ((page ?? 1) - 1) * take;
+  const currentPage = page ?? 1;
+  const skip = (currentPage - 1) * take;
 
   const where: Record<string, unknown> = {};
 
@@ -101,19 +102,74 @@ export async function getProducts(
     };
   }
 
+  if (inStock) {
+    where.inventory = { gt: 0 };
+  }
+
+  const isRatingSort = sort === "rating" || sort === "rating-desc" || sort === "rating-asc";
+
   const orderBy = (() => {
     switch (sort) {
       case "price-asc":
         return { price: "asc" as const };
       case "price-desc":
         return { price: "desc" as const };
+      case "name-asc":
       case "name":
         return { name: "asc" as const };
+      case "name-desc":
+        return { name: "desc" as const };
+      case "oldest":
+        return { createdAt: "asc" as const };
       case "newest":
       default:
         return { createdAt: "desc" as const };
     }
   })();
+
+  if (minRating || isRatingSort) {
+    const rawProducts = await db.product.findMany({
+      where,
+      orderBy: isRatingSort ? undefined : orderBy,
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        reviews: { select: { rating: true } },
+      },
+    });
+
+    let mapped = rawProducts.map(mapProductListItem);
+
+    if (minRating) {
+      mapped = mapped.filter((p) => p.rating.rate >= minRating);
+    }
+
+    if (sort === "rating" || sort === "rating-desc") {
+      mapped.sort((a, b) => b.rating.rate - a.rating.rate);
+    } else if (sort === "rating-asc") {
+      mapped.sort((a, b) => a.rating.rate - b.rating.rate);
+    } else if (sort === "price-asc") {
+      mapped.sort((a, b) => a.price - b.price);
+    } else if (sort === "price-desc") {
+      mapped.sort((a, b) => b.price - a.price);
+    } else if (sort === "name-asc" || sort === "name") {
+      mapped.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === "name-desc") {
+      mapped.sort((a, b) => b.name.localeCompare(a.name));
+    }
+
+    const total = mapped.length;
+    const paginatedData = mapped.slice(skip, skip + take);
+
+    return {
+      data: paginatedData,
+      pagination: {
+        page: currentPage,
+        limit: take,
+        total,
+        totalPages: Math.ceil(total / take) || 1,
+      },
+    };
+  }
 
   const [products, total] = await Promise.all([
     db.product.findMany({
@@ -129,23 +185,15 @@ export async function getProducts(
     db.product.count({ where }),
   ]);
 
-  let mapped = products.map(mapProductListItem);
-
-  if (minRating) {
-    mapped = mapped.filter((p) => p.rating.rate >= minRating);
-  }
-
-  if (sort === "rating") {
-    mapped.sort((a, b) => b.rating.rate - a.rating.rate);
-  }
+  const mapped = products.map(mapProductListItem);
 
   return {
     data: mapped,
     pagination: {
-      page: page ?? 1,
+      page: currentPage,
       limit: take,
       total,
-      totalPages: Math.ceil(total / take),
+      totalPages: Math.ceil(total / take) || 1,
     },
   };
 }
